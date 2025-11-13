@@ -38,11 +38,13 @@ jobs:
             ~/.espressif/
           key: ${{ runner.os }}-esp-idf-${{ matrix.esp_idf_version }}-deps
 
-      - name: Build with ESP-IDF
+      - name: Build firmware
         uses: espressif/esp-idf-ci-action@v1
         with:
           esp_idf_version: ${{ matrix.esp_idf_version }}
-          target: esp32
+          target: esp32s3
+          extra_docker_args: "-v ~/.espressif:/root/.espressif"
+
 
       - name: Upload firmware artifacts
         uses: actions/upload-artifact@v4
