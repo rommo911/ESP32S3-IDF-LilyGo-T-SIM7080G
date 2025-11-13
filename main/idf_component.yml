@@ -1,0 +1,32 @@
+dependencies:
+  espressif/arduino-esp32:
+    version: "^3.3.0"
+  espressif/esp_modem:
+    version: "^1.1.0"
+  bblanchon/ArduinoJson: 
+    version: "^7.4.2"
+  TinyGSM:
+    path: lib/TinyGSM
+  esp-fs-webserver:
+    path: lib/esp-fs-webserver 
+  mpu6500:
+    path: lib/mpu6500
+  MqttLogger:
+    path: lib/MqttLogger
+  knolleary/pubsubclient:  
+    path : lib/pubsubclient
+  adafruit/Adafruit_BusIO:
+    path : lib/Adafruit_BusIO
+  Adafruit_NeoPixel:
+    path: lib/Adafruit_NeoPixel
+  Adafruit_MAX1704X:
+    path: lib/Adafruit_MAX1704X
+  XPowersLib:
+    path : lib/XPowersLib
+
+
+
+
+
+
+

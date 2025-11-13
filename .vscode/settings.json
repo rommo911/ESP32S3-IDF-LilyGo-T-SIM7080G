@@ -1,0 +1,34 @@
+{
+  "C_Cpp.intelliSenseEngine": "default",
+  "idf.espIdfPathWin": "C:\\Users\\User\\esp\\v5.5.1\\esp-idf",
+  "idf.pythonInstallPath": "C:\\Users\\User\\.espressif\\tools\\idf-python\\3.11.2\\python.exe",
+  "idf.openOcdConfigs": [
+    "interface/ftdi/esp_ftdi.cfg",
+    "target/esp32s3.cfg"
+  ],
+  "idf.toolsPathWin": "C:\\Users\\User\\.espressif",
+  "idf.customExtraVars": {
+    "IDF_TARGET": "esp32s3"
+  },
+  "clangd.path": "C:\\Users\\User\\.espressif\\tools\\esp-clang\\esp-19.1.2_20250312\\esp-clang\\bin\\clangd.exe",
+  "clangd.arguments": [
+    "--background-index",
+    "--query-driver=C:\\Users\\User\\.espressif\\tools\\xtensa-esp-elf\\esp-14.2.0_20241119\\xtensa-esp-elf\\bin\\xtensa-esp32-elf-gcc.exe",
+    "--compile-commands-dir=${workspaceFolder}\\build"
+  ],
+  "idf.flashType": "UART",
+  "idf.portWin": "COM9",
+  "files.associations": {
+    "fstream": "cpp",
+    "chrono": "cpp",
+    "freertos.h": "c"
+  },
+  "idf.launchMonitorOnDebugSession": true,
+  "idf.enableCCache": true,
+  "idf.flashPartitionToUse": "app",
+  "idf.monitorNoReset": true,
+  "idf.monitorEnableTimestamps": true,
+  "idf.qemuDebugMonitor": false,
+  "idf.showOnboardingOnInit": false,
+  "idf.telemetry": false
+}
