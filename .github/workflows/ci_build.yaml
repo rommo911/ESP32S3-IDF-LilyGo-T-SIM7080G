@@ -30,25 +30,15 @@ jobs:
         with:
           submodules: 'recursive'
 
-      - name: Cache ESP-IDF dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/pip
-            ~/.espressif/
-          key: ${{ runner.os }}-esp-idf-${{ matrix.esp_idf_version }}-deps
-
       - name: Build firmware
         uses: espressif/esp-idf-ci-action@v1
         with:
           esp_idf_version: ${{ matrix.esp_idf_version }}
           target: esp32s3
-          extra_docker_args: "-v ~/.espressif:/root/.espressif"
-
 
       - name: Upload firmware artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: firmware-${{ matrix.esp_idf_version }}
+          name: firmware-lillygo-LilyGo-T-SIM7080G-${{ matrix.esp_idf_version }}-${{ steps.timestamp.outputs.timestamp }}
           path: |
             build/*.bin
