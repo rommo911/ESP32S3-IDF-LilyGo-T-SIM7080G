@@ -1,125 +1,92 @@
-| Supported Targets | ESP32 | ESP32-C2 | ESP32-C3 | ESP32-C5 | ESP32-C6 | ESP32-C61 | ESP32-S2 | ESP32-S3 | ESP32-P4 | ESP32-H2 |
-| ----------------- | ----- | -------- | -------- | -------- | --------- | -------- | -------- | -------- | -------- | -------- |
+# LilyGo-T-SIM7080G IoT Tracker
 
-# Wi-Fi Station Example
+This project is an advanced IoT tracking device based on the LilyGo T-SIM7080G board. It integrates motion sensing, GPS, and multiple connectivity options (WiFi and Cellular) to create a versatile asset tracker for car and serves mainly to turn on dash cam to recrd events if car has been shocked.
+The device is highly configurable via a web interface and is optimized for low-power operation.
 
-(See the README.md file in the upper level 'examples' directory for more information about examples.)
+## Key Features
 
-This example shows how to use the Wi-Fi Station functionality of the Wi-Fi driver of ESP for connecting to an Access Point.
+- **Power Management:**
+  - Utilizes the AXP2101 Power Management Unit (PMU).
+  - Supports deep sleep modes to conserve battery.
+  - Multiple wakeup sources: motion (IMU), timer, and power button/VBUS connection.
+  - Battery level monitoring and automatic shutdown on critical battery levels.
+  - TODO : add output to retain a relay of phone charger in the car to be on for specific time ( ex 5 minute ) after cars is turned off
 
-## How to use example
+- **Motion Detection:**
+  - Uses an MPU6500 IMU with its Digital Motion Processor (DMP) to detect motion.
+  - Wake-on-Motion (WOM) functionality to wake the device from deep sleep.
+  - Configurable motion sensitivity and thresholds via the web interface.
+  - DONE : rework the init of Wake-on-motion initialization of the mpu to optimize porpoer detection and power management 
+  - DONE : Enabled cycle wake up and reduced accelerometer output rate in low power mode.
 
-### Configure the project
+- **Connectivity:**
+  - **WiFi:** Can operate in both Station (STA) and Access Point (AP) modes.
+  - **Cellular:** Integrates the SIM7080G modem for GPRS/NB-IoT connectivity.
+  - **MQTT:** Publishes data (e.g., logs, GPS location) to an MQTT broker.
+  - **Over-the-Air (OTA) Updates:** Supports firmware updates via WiFi.
 
-Open the project configuration menu (`idf.py menuconfig`).
+- **Sleep / Periodic Wakeup**
+  - support waking up each < 1h - configurable >  to take snapshot ;
+    wake up -> turn on cam , sleep for 10s --> wake up & turn off camera , return to secure mode ( motion detection ) 
 
-In the `Example Configuration` menu:
+- **BLEUTOOTH / BLE:** 
+  - TODO: broadcast BLE periodically ( maybe each 1m ? very low power needed) ( got sleep with time & flag that we are waking up for BLE ? or other approach)
+  - TODO: pair with phone via web server to enable bleutooh page and its config ( start pairing process , removed paried device, reset , other config)
+  - TODO: when car started -> start bleutooth and try connect to phone, upon connecting to phone :
+          sync time if possible ? develop android app ? 
+          when Vbus ( car running ) & phone connected and ready to receive file -> send logs from files stored in file system ? or notifications maybe ? 
 
-* Set the Wi-Fi configuration.
-    * Set `WiFi SSID`.
-    * Set `WiFi Password`.
+- **GPS Tracking:**
+  - Onboard GPS functionality provided by the SIM7080G modem.
+  - Periodically acquires and can report location data (optional) .
+  - TODO : when motion is detected without car started within 5m, acquire GPS position, timestamp of wake time or shock time, and store it in log
+  - TODO : possibly send the gps info and timestamp to mqtt message over mqtts , or post HTTPS request from the Cellular modem when possible.
 
-Optional: If you need, change the other options according to your requirements.
+- **Configuration:**
+  - Provides a web server (in AP mode or STA mode) for configuration.
+  - Settings are stored in Non-Volatile Storage (NVS).
+  - Configurable parameters include:
+    - WiFi and MQTT credentials.
+    - IMU motion detection thresholds.
+    - System timing for sleep and WiFi timeouts.
+    - iBeacon UUID.
+    - Web server credentials.
 
-### Build and Flash
+- **Peripherals:**
+  - **SD Card:** Support for data logging and file storage.
+  - **Status LEDs:** Uses FastLED library to control WS2811 LEDs for status indication.
+  - **Real-Time Clock (RTC):** External DS1302 for timekeeping (optional).
 
-Build the project and flash it to the board, then run the monitor tool to view the serial output:
+## Hardware Components
+- **Main Board:** LilyGo T-SIM7080G
+- **PMU:** AXP2101
+- **IMU:** MPU6500
+- **RTC:** DS1302 (optional)
+- **Storage:** MicroSD Card Slot
+- **LED:** WS2811 RGB LED (2 leds)
 
-Run `idf.py -p PORT flash monitor` to build, flash and monitor the project.
+## Software Architecture
 
-(To exit the serial monitor, type ``Ctrl-]``.)
+The firmware is built on the Arduino framework for ESP32. The codebase is modular, with distinct components for handling different hardware features.
 
-See the Getting Started Guide for all the steps to configure and use the ESP-IDF to build projects.
+- `src/main.cpp`: The main application entry point. It contains the primary `setup()` and `loop()` functions, managing the device's overall state (e.g., sleeping, waking, connecting to WiFi).
+- `src/power/`: Manages the AXP2101 PMU, handling battery charging, power domain control, deep sleep, and wakeup reasons.
+- `src/imu6500/`: Implements the motion detection logic using the MPU6500's DMP. It calibrates the sensor and provides a simple interface to check for motion events.
+- `src/modem/`: Controls the SIM7080G modem. This module is responsible for initializing the modem, managing the cellular connection (GPRS), and acquiring GPS data.
+- `src/wifi/`: Handles all WiFi-related tasks, including connecting as a client (STA), creating an access point (AP), running the MQTT client, and managing OTA updates.
+- `src/web_server/`: Implements a web-based configuration portal. It allows the user to change various system settings, which are saved to persistent storage.
+- `src/sdcard/`: Provides functions to initialize and manage the SD card.
+- `src/fast_led/`: A thread-safe controller for the status LEDs, supporting solid, blinking, and fading patterns.
+- `src/rtc/`: Manages the external DS1302 Real-Time Clock.
+- `src/camControl.cpp`: Simple functions to power the camera on and off.
+- `src/pins.hpp`: Centralized header for all GPIO pin definitions.
 
-* [ESP-IDF Getting Started Guide on ESP32](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/get-started/index.html)
-* [ESP-IDF Getting Started Guide on ESP32-S2](https://docs.espressif.com/projects/esp-idf/en/latest/esp32s2/get-started/index.html)
-* [ESP-IDF Getting Started Guide on ESP32-C3](https://docs.espressif.com/projects/esp-idf/en/latest/esp32c3/get-started/index.html)
+## Getting Started
 
-## Example Output
-Note that the output, in particular the order of the output, may vary depending on the environment.
-
-Console output if station connects to AP successfully:
-```
-I (589) wifi station: ESP_WIFI_MODE_STA
-I (599) wifi: wifi driver task: 3ffc08b4, prio:23, stack:3584, core=0
-I (599) system_api: Base MAC address is not set, read default base MAC address from BLK0 of EFUSE
-I (599) system_api: Base MAC address is not set, read default base MAC address from BLK0 of EFUSE
-I (629) wifi: wifi firmware version: 2d94f02
-I (629) wifi: config NVS flash: enabled
-I (629) wifi: config nano formatting: disabled
-I (629) wifi: Init dynamic tx buffer num: 32
-I (629) wifi: Init data frame dynamic rx buffer num: 32
-I (639) wifi: Init management frame dynamic rx buffer num: 32
-I (639) wifi: Init management short buffer num: 32
-I (649) wifi: Init static rx buffer size: 1600
-I (649) wifi: Init static rx buffer num: 10
-I (659) wifi: Init dynamic rx buffer num: 32
-I (759) phy: phy_version: 4180, cb3948e, Sep 12 2019, 16:39:13, 0, 0
-I (769) wifi: mode : sta (30:ae:a4:d9:bc:c4)
-I (769) wifi station: wifi_init_sta finished.
-I (889) wifi: new:<6,0>, old:<1,0>, ap:<255,255>, sta:<6,0>, prof:1
-I (889) wifi: state: init -> auth (b0)
-I (899) wifi: state: auth -> assoc (0)
-I (909) wifi: state: assoc -> run (10)
-I (939) wifi: connected with #!/bin/test, aid = 1, channel 6, BW20, bssid = ac:9e:17:7e:31:40
-I (939) wifi: security type: 3, phy: bgn, rssi: -68
-I (949) wifi: pm start, type: 1
-
-I (1029) wifi: AP's beacon interval = 102400 us, DTIM period = 3
-I (2089) esp_netif_handlers: sta ip: 192.168.77.89, mask: 255.255.255.0, gw: 192.168.77.1
-I (2089) wifi station: got ip:192.168.77.89
-I (2089) wifi station: connected to ap SSID:myssid password:mypassword
-```
-
-Console output if the station failed to connect to AP:
-```
-I (589) wifi station: ESP_WIFI_MODE_STA
-I (599) wifi: wifi driver task: 3ffc08b4, prio:23, stack:3584, core=0
-I (599) system_api: Base MAC address is not set, read default base MAC address from BLK0 of EFUSE
-I (599) system_api: Base MAC address is not set, read default base MAC address from BLK0 of EFUSE
-I (629) wifi: wifi firmware version: 2d94f02
-I (629) wifi: config NVS flash: enabled
-I (629) wifi: config nano formatting: disabled
-I (629) wifi: Init dynamic tx buffer num: 32
-I (629) wifi: Init data frame dynamic rx buffer num: 32
-I (639) wifi: Init management frame dynamic rx buffer num: 32
-I (639) wifi: Init management short buffer num: 32
-I (649) wifi: Init static rx buffer size: 1600
-I (649) wifi: Init static rx buffer num: 10
-I (659) wifi: Init dynamic rx buffer num: 32
-I (759) phy: phy_version: 4180, cb3948e, Sep 12 2019, 16:39:13, 0, 0
-I (759) wifi: mode : sta (30:ae:a4:d9:bc:c4)
-I (769) wifi station: wifi_init_sta finished.
-I (889) wifi: new:<6,0>, old:<1,0>, ap:<255,255>, sta:<6,0>, prof:1
-I (889) wifi: state: init -> auth (b0)
-I (1889) wifi: state: auth -> init (200)
-I (1889) wifi: new:<6,0>, old:<6,0>, ap:<255,255>, sta:<6,0>, prof:1
-I (1889) wifi station: retry to connect to the AP
-I (1899) wifi station: connect to the AP fail
-I (3949) wifi station: retry to connect to the AP
-I (3949) wifi station: connect to the AP fail
-I (4069) wifi: new:<6,0>, old:<6,0>, ap:<255,255>, sta:<6,0>, prof:1
-I (4069) wifi: state: init -> auth (b0)
-I (5069) wifi: state: auth -> init (200)
-I (5069) wifi: new:<6,0>, old:<6,0>, ap:<255,255>, sta:<6,0>, prof:1
-I (5069) wifi station: retry to connect to the AP
-I (5069) wifi station: connect to the AP fail
-I (7129) wifi station: retry to connect to the AP
-I (7129) wifi station: connect to the AP fail
-I (7249) wifi: new:<6,0>, old:<6,0>, ap:<255,255>, sta:<6,0>, prof:1
-I (7249) wifi: state: init -> auth (b0)
-I (8249) wifi: state: auth -> init (200)
-I (8249) wifi: new:<6,0>, old:<6,0>, ap:<255,255>, sta:<6,0>, prof:1
-I (8249) wifi station: retry to connect to the AP
-I (8249) wifi station: connect to the AP fail
-I (10299) wifi station: connect to the AP fail
-I (10299) wifi station: Failed to connect to SSID:myssid, password:mypassword
-```
-
-## Running the example on ESP Chips without Wi-Fi
-
-This example can run on ESP Chips without Wi-Fi using ESP-Hosted. See the [Two-Chip Solution](../../README.md#wi-fi-examples-with-two-chip-solution) section in the upper level `README.md` for information.
-
-## Troubleshooting
-
-For any technical queries, please open an [issue](https://github.com/espressif/esp-idf/issues) on GitHub. We will get back to you soon.
+1.  **ESP IDF:** This project is set up to be built with ESP IDF. Open the project in an IDE like VSCode with the extension.
+2.  **Configuration:**
+    - When the device first starts or cannot connect to a known WiFi network, it will enter Access Point (AP) mode.
+    - Connect to the WiFi network created by the device (the default is "ap_ssid").
+    - Navigate to the device's IP address (usually 192.168.4.1) in a web browser.
+    - Use the web interface to configure your WiFi credentials, MQTT broker details, and other settings.
+3.  **Build and Upload:** Use ESP IDF to build and upload the firmware to the T-SIM7080G board.
