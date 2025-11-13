@@ -1,11 +1,21 @@
-
 name: CI-build
+
 on:
   push:
-    branches: [master, main, dev, feature/*, bugfix/*]
+    branches:
+      - master
+      - main
+      - dev
+      - feature/*
+      - bugfix/*
   pull_request:
-    branches: [master, main, dev, feature/*, bugfix/*]
-  workflow_dispatch:   # <-- Add this line
+    branches:
+      - master
+      - main
+      - dev
+      - feature/*
+      - bugfix/*
+  workflow_dispatch:
 
 jobs:
   build:
@@ -13,26 +23,30 @@ jobs:
     strategy:
       matrix:
         esp_idf_version: [v5.3]
+
     steps:
       - name: Checkout source
-      - uses: actions/checkout@v3
+        uses: actions/checkout@v3
         with:
-         submodules: 'true'
-      - uses: actions/cache@v4
+          submodules: true
+
+      - name: Cache ESP-IDF dependencies
+        uses: actions/cache@v4
         with:
           path: |
             ~/.cache/pip
             ~/.espressif/
-          key: ${{ runner.os }}-pio
+          key: ${{ runner.os }}-esp-idf-${{ matrix.esp_idf_version }}-deps
 
-      - name: esp-idf build
+      - name: Build with ESP-IDF
         uses: espressif/esp-idf-ci-action@v1
         with:
           esp_idf_version: ${{ matrix.esp_idf_version }}
           target: esp32
+
       - name: Upload firmware artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: esp32-s3-waveshare-${{ matrix.esp_idf_version }}
+          name: firmware-${{ matrix.esp_idf_version }}
           path: |
-            build/esp32-s3-waveshare.bin
+            build/*.bin
