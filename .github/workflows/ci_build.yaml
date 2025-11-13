@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        esp_idf_version: [v5.3]
+        esp_idf_version: [v5.5.1]
 
     steps:
       - name: Checkout source
