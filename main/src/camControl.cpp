@@ -10,16 +10,24 @@ static uint64_t lastCamOffTs = 0;
 static uint32_t WifiTimeout = 1000U * 60U * 5U;  //
 static uint32_t No_MotionTimeout = 10U * 1000U;  //
 static uint32_t SecureModeTimeout = 10U * 1000U; //
+static uint64_t SnapShotTime = 2 * 60U * 1000U; // 2 hours
 
 
 void loadTimingPref()
 {
     Preferences pref;
     pref.begin("timing", true);
-    WifiTimeout = pref.getInt("wifitm", WifiTimeout);                  //
-    No_MotionTimeout = pref.getInt("nomotiontm", No_MotionTimeout);    //
-    SecureModeTimeout = pref.getInt("securmodetm", SecureModeTimeout); //
+    WifiTimeout = pref.getULong("wifitm", WifiTimeout);                  //
+    No_MotionTimeout = pref.getULong("nomotiontm", No_MotionTimeout);    //
+    SecureModeTimeout = pref.getULong("securmodetm", SecureModeTimeout); //
+    SnapShotTime = pref.getULong64("SnapShotTime", SnapShotTime); //
     mqttLogger.printf(" timing wifitm %d , nomotiontm %d , securmodetm %d \n", WifiTimeout, No_MotionTimeout, SecureModeTimeout);
+}
+
+
+uint64_t getSnapShotTime()
+{
+    return SnapShotTime;
 }
 
 uint32_t getWifiTimeout()

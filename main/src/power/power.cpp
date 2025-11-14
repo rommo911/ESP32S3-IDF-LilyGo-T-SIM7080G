@@ -24,6 +24,8 @@ namespace power
     std::atomic<bool> isBatteryLowLevel;
     std::atomic<bool> isBatteryCriticalLevel;
     std::atomic<bool> isPekeyShortPressed;
+    
+    static RTC_DATA_ATTR SleepCause _sleepCause;
 
     uint64_t VbusInsertTimestamp = 0;
     uint64_t VbusRemovedTimestamp = 0;
@@ -431,7 +433,7 @@ namespace power
         return false;
     }
 
-    void DeepSleepWith_IMU_PMU_Wake()
+    void DeepSleepWith_IMU_PMU_Timer_Wake(SleepCause cause, uint32_t ms)
     {
         // Configure wakeup source: IMU interrupt pin
         mqttLogger.println("Entering deep sleep mode with IMU and PMU wakeup");
@@ -445,6 +447,11 @@ namespace power
         String str = "Going to sleep now with mask  " + String(wakeup_mask, BIN);
         mqttLogger.printf(str.c_str());
         ESP_ERROR_CHECK(esp_sleep_enable_ext1_wakeup_io(wakeup_mask, ESP_EXT1_WAKEUP_ANY_LOW));
+        if (ms > 0)
+        {
+            esp_sleep_enable_timer_wakeup(1000 * ms);
+            _sleepCause = cause;
+        }
         delay(100);
         esp_deep_sleep_start();
     }
@@ -465,7 +472,7 @@ namespace power
         esp_deep_sleep_start();
     }
 
-    void DeepSleepWith_IMU_Timer_Wake(uint32_t ms)
+    void DeepSleepWith_IMU_Timer_Wake(uint32_t ms, SleepCause cause)
     {
         mqttLogger.println("Entering deep sleep mode with timer PMU wakeup");
         // Configure wakeup source: IMU interrupt pin
@@ -478,12 +485,13 @@ namespace power
         uint64_t wakeup_mask = (1ULL << MOTION_INTRRUPT_PIN) | (1ULL << PMU_INPUT_PIN);
         String str = "Going to sleep now with mask " + String(wakeup_mask, BIN) + String(ms);
         mqttLogger.printf(str.c_str());
+        _sleepCause = cause;
         esp_sleep_enable_ext1_wakeup_io(wakeup_mask, ESP_EXT1_WAKEUP_ANY_LOW);
         esp_sleep_enable_timer_wakeup(1000 * ms);
         esp_deep_sleep_start();
     }
 
-    void DeepSleepWith_Timer_Wake(uint32_t ms)
+    void DeepSleepWith_PMU_Timer_Wake(SleepCause cause, uint32_t ms)
     {
         mqttLogger.println("Entering deep sleep mode with timer PMU wakeup");
         // Configure wakeup source: IMU interrupt pin
@@ -496,9 +504,14 @@ namespace power
         uint64_t wakeup_mask = (1ULL << PMU_INPUT_PIN);
         String str = "Going to sleep now with mask " + String(wakeup_mask, BIN) + String(ms);
         mqttLogger.printf(str.c_str());
+        _sleepCause = cause;
         esp_sleep_enable_ext1_wakeup_io(wakeup_mask, ESP_EXT1_WAKEUP_ANY_LOW);
         esp_sleep_enable_timer_wakeup(1000 * ms);
         esp_deep_sleep_start();
+    }
+    SleepCause getSleepCause()
+    {
+        return _sleepCause;
     }
 
     WakeUpReason Get_wake_reason()

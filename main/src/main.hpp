@@ -18,5 +18,6 @@ uint32_t getNoMotionTimeout();
 
 uint32_t getSecureModeTimeout();
 
+uint64_t getSnapShotTime();
 
 #endif // MAIN_H_

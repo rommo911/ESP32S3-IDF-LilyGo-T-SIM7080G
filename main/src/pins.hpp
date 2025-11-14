@@ -2,12 +2,17 @@
 #include <Arduino.h>
 
 
-const gpio_num_t CAM_PIN = GPIO_NUM_46;
+const gpio_num_t CAM_PIN = GPIO_NUM_12;
 const gpio_num_t I2C_SDA_PIN = GPIO_NUM_9; //
 const gpio_num_t I2C_SCL_PIN = GPIO_NUM_10; //
 const gpio_num_t MOTION_INTRRUPT_PIN = GPIO_NUM_11; //
 const gpio_num_t PIXEL_LED_PIN = GPIO_NUM_13;
+const gpio_num_t BUZZER_AUX_PIN = GPIO_NUM_14;
 const gpio_num_t PMU_INPUT_PIN_ = GPIO_NUM_6;
+#define PMU_INPUT_PIN               (6)
+
+#define I2C_SDA_POWER                     (15)
+#define I2C_SCL_POWER                     (7)
 
 #define PWDN_GPIO_NUM               (-1)
 #define RESET_GPIO_NUM              (18)
@@ -26,10 +31,6 @@ const gpio_num_t PMU_INPUT_PIN_ = GPIO_NUM_6;
 #define Y3_GPIO_NUM                 (47)
 #define Y2_GPIO_NUM                 (14)
 
-#define I2C_SDA_POWER                     (15)
-#define I2C_SCL_POWER                     (7)
-
-#define PMU_INPUT_PIN               (6)
 
 #define BOARD_MODEM_PWR_PIN         (41)
 #define BOARD_MODEM_DTR_PIN         (42)
@@ -37,7 +38,6 @@ const gpio_num_t PMU_INPUT_PIN_ = GPIO_NUM_6;
 #define BOARD_MODEM_RXD_PIN         (4)
 #define BOARD_MODEM_TXD_PIN         (5)
 
-#define USING_MODEM
 
 #define SDMMC_CMD                   (39)
 #define SDMMC_CLK                   (38)

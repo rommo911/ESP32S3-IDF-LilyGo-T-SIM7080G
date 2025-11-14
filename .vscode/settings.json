@@ -21,7 +21,16 @@
   "files.associations": {
     "fstream": "cpp",
     "chrono": "cpp",
-    "freertos.h": "c"
+    "freertos.h": "c",
+    "array": "cpp",
+    "memory": "cpp",
+    "format": "cpp",
+    "future": "cpp",
+    "istream": "cpp",
+    "functional": "cpp",
+    "tuple": "cpp",
+    "utility": "cpp",
+    "variant": "cpp"
   },
   "idf.launchMonitorOnDebugSession": true,
   "idf.enableCCache": true,

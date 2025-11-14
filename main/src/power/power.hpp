@@ -19,6 +19,17 @@ namespace power
         TIMER = 2,
         UNKNOWN
     };
+
+    enum SleepCause : uint8_t
+    {
+        AFTER_MOTION = 0,
+        AFTER_NO_MOTION = 1,
+        SLEEP_SNAP_SHOT = 2,
+        AFTER_ON = 4,
+        NA
+    };
+    SleepCause getSleepCause();
+
     bool setupPower();
     esp_sleep_wakeup_cause_t getWakeupReason();
     WakeUpReason Get_wake_reason();
@@ -29,10 +40,9 @@ namespace power
     bool isBatLowLevel();
     bool isBatCriticalLevel();
     bool iskeyShortPressed();
-    void DeepSleepWith_IMU_PMU_Wake();
+    void DeepSleepWith_IMU_PMU_Timer_Wake(SleepCause cause, uint32_t ms = 0);
+    void DeepSleepWith_PMU_Timer_Wake(SleepCause cause, uint32_t ms= 0);
     void DeepSleepWith_PMU_Wake();
     uint64_t getLastVbusInsertedTs();
     uint64_t getLastVbusRemovedTs();
-    void DeepSleepWith_IMU_Timer_Wake(uint32_t ms);
-    void DeepSleepWith_Timer_Wake(uint32_t ms);
 };

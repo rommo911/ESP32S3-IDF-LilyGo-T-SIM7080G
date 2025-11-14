@@ -29,8 +29,6 @@ static uint64_t LastWifiOnTimestamp = 0;
 
 static uint32_t RTC_DATA_ATTR motionCounter;
 
-static imu6500_dmp::MotionDtect_t motionInfo = {};
-
 power::WakeUpReason wu;
 
 static inline bool NoMotionSince(const uint32_t timeout)
@@ -48,7 +46,7 @@ void CheckMotionCount()
     if (motionCounter > 0)
     {
         motionCounter = 0;
-        led::start_blink(1, led::_rgb(50,50,50), led::_rgb(255,0,0), 250, 150, 5000);
+        led::start_blink(1, led::_rgb(50, 50, 50), led::_rgb(255, 0, 0), 250, 150, 5000);
         delay(5000);
     }
 }
@@ -58,14 +56,12 @@ void setup()
     uint8_t counter = 0;
     Serial.begin(115200);
     wu = power::Get_wake_reason();
-
     power::setupPower();
-    bool ret = false;
     setCpuFrequencyMhz(80);
     WiFi.mode(WIFI_OFF);
     // Serial.setTxBufferSize(512);
     led::led_init();
-    led::set_solid(0, led::_rgb(0,0,30));
+    led::set_solid(0, led::_rgb(0, 0, 30));
     pinMode(CAM_PIN, OUTPUT);
     turnOnCamera();
     loadTimingPref();
@@ -76,7 +72,7 @@ void setup()
     else
     {
         Serial.println("IMU setup failed ");
-        led::start_blink(0, led::_rgb(255,0,0));
+        led::start_blink(0, led::_rgb(255, 0, 0));
         delay(5000);
         led::stop_led(0);
         delay(50);
@@ -110,27 +106,27 @@ void setup()
         case power::WakeUpReason::MOTION:
         {
             mqttLogger.println("wake FROM MOTION");
-            led::start_blink(0, led::_rgb(0,0,100), 0, 200, 200, 2000);
+            led::start_blink(0, led::_rgb(0, 0, 100), 0, 200, 200, 2000);
             delay(1000);
             if (power::isBatLowLevel())
             {
-                led::set_solid(0,led::_rgb(0,5,0));
-                led::set_solid(1, led::_rgb(5,0,0));
+                led::set_solid(0, led::_rgb(0, 5, 0));
+                led::set_solid(1, led::_rgb(5, 0, 0));
             }
             else
             {
-                led::set_solid(0, led::_rgb(0,20,0));
-                led::set_solid(1, led::_rgb(20,0,0));
+                led::set_solid(0, led::_rgb(0, 20, 0));
+                led::set_solid(1, led::_rgb(20, 0, 0));
             }
             if (!power::isPowerVBUSOn())
             {
                 if (power::isBatLowLevel())
                 {
-                    power::DeepSleepWith_Timer_Wake(getNoMotionTimeout()); // dont keep waking up for new motion !
+                    power::DeepSleepWith_PMU_Timer_Wake(power::AFTER_MOTION, getNoMotionTimeout()); // dont keep waking up for new motion !
                 }
                 else
                 {
-                    power::DeepSleepWith_IMU_Timer_Wake(getNoMotionTimeout()); // wake up and reset timer if new motion is detected before expires
+                    power::DeepSleepWith_IMU_PMU_Timer_Wake(power::AFTER_MOTION, getNoMotionTimeout()); // wake up and reset timer if new motion is detected before expires
                 }
             }
 
@@ -138,20 +134,29 @@ void setup()
         }
         case power::WakeUpReason::TIMER:
         {
-            led::start_blink(0, led::_rgb(50,50,50), 0, 200, 200, 1000);
-            delay(1000);
             if (!imu6500_dmp::getMotion() && !power::isPowerVBUSOn())
             {
-                mqttLogger.println("wake FROM Timer .. turn off Cam");
-                motionCounter++;
+                if (power::getSleepCause() == power::SLEEP_SNAP_SHOT)
+                {
+                    led::start_fade(0, led::_rgb(50, 50, 50), 0, 500, 4);
+                    mqttLogger.println("wake FROM Timer for snapshot...");
+                    delay(5000);
+                }
+                else
+                {
+                    led::start_blink(0, led::_rgb(50, 50, 50), 0, 200, 200, 500);
+                    mqttLogger.println("wake FROM Timer after no motion .. turn off Cam");
+                    delay(500);
+                    motionCounter++;
+                }
                 turnOffCamera();
                 if (power::isBatLowLevel())
-                    led::set_solid(0, led::_rgb(2,0,0)); // turn off led before sleep
+                    led::set_solid(0, led::_rgb(2, 0, 0)); // turn off led before sleep
                 else
-                    led::set_solid(0, led::_rgb(0,0,2)); // turn off led before sleep
+                    led::set_solid(0, led::_rgb(0, 0, 2)); // turn off led before sleep
 
                 led::stop_led(1); // turn off led before sleep
-                power::DeepSleepWith_IMU_PMU_Wake();
+                power::DeepSleepWith_IMU_PMU_Timer_Wake(power::SLEEP_SNAP_SHOT, getSnapShotTime());
             }
 
             break;
@@ -186,7 +191,7 @@ void loopPowerCheck()
     if (power::isBatCriticalLevel())
     {
         mqttLogger.printf("Battery critical level detected in main loop \n");
-        led::start_blink(0, led::_rgb(20,0,0), 0, 75, 125, 500);
+        led::start_blink(0, led::_rgb(20, 0, 0), 0, 75, 125, 500);
         delay(500);
         led::stop_led(1);
         led::stop_led(0);
@@ -196,10 +201,10 @@ void loopPowerCheck()
     {
         simulatedLowPowerTrigger = false;
         mqttLogger.printf("Battery low level detected in main loop \n");
-        led::set_solid(0, led::_rgb(2,0,0)); // turn off led before sleep
-        led::stop_led(1);             // turn off led before sleep
+        led::set_solid(0, led::_rgb(2, 0, 0)); // turn off led before sleep
+        led::stop_led(1);                      // turn off led before sleep
         delay(30);
-        power::DeepSleepWith_IMU_PMU_Wake();
+        power::DeepSleepWith_IMU_PMU_Timer_Wake(power::AFTER_ON);
     }
 }
 
@@ -208,7 +213,7 @@ void loopImuMotion()
 {
     if (imu6500_dmp::getMotion())
     {
-        led::start_blink(0, led::_rgb(0,0,100), 0, 150, 200, 200); // turn off led before sleep
+        led::start_blink(0, led::_rgb(0, 0, 100), 0, 150, 200, 200); // turn off led before sleep
         delay(150);
     }
     if (power::isPowerVBUSOn())
@@ -221,9 +226,9 @@ void loopImuMotion()
     {
         mqttLogger.println("starting secure mode");
         turnOffCamera();
-        led::set_solid(0, led::_rgb(0,0,2)); // 
-        led::stop_led(1);         
-        power::DeepSleepWith_IMU_PMU_Wake();
+        led::set_solid(0, led::_rgb(0, 0, 2)); //
+        led::stop_led(1);
+        power::DeepSleepWith_IMU_PMU_Timer_Wake(power::SLEEP_SNAP_SHOT, getSnapShotTime());
     }
     else
     {
@@ -244,7 +249,7 @@ void loopWifiStatus()
         mqttLogger.println("Power key short pressed detected in main loop");
         if (!GetWifiOn())
         {
-            led::start_blink(1,led::_rgb(0,50,0), 0, 200, 2500, 120 * 1000); // crete blink patter to inform user its waiting
+            led::start_blink(1, led::_rgb(0, 50, 0), 0, 200, 2500, 120 * 1000); // crete blink patter to inform user its waiting
             StartWifi();
             LastWifiOnTimestamp = millis();
         }
@@ -267,32 +272,30 @@ void loop()
     delay(10);
 }
 
-
-
 extern "C" void app_main(void)
 {
-  esp_log_level_set("*", ESP_LOG_INFO);
-  esp_err_t err = nvs_flash_init();
-  if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND)
-  {
-    const esp_partition_t *partition = esp_partition_find_first(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_DATA_NVS, NULL);
-    if (partition != NULL)
+    esp_log_level_set("*", ESP_LOG_INFO);
+    esp_err_t err = nvs_flash_init();
+    if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND)
     {
-      err = esp_partition_erase_range(partition, 0, partition->size);
-      if (!err)
-      {
-        err = nvs_flash_init();
-      }
-      else
-      {
-        log_e("Failed to format the broken NVS partition!");
-      }
+        const esp_partition_t *partition = esp_partition_find_first(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_DATA_NVS, NULL);
+        if (partition != NULL)
+        {
+            err = esp_partition_erase_range(partition, 0, partition->size);
+            if (!err)
+            {
+                err = nvs_flash_init();
+            }
+            else
+            {
+                log_e("Failed to format the broken NVS partition!");
+            }
+        }
     }
-  }
 
-  setup();
-  while (1)
-  {
-    loop();
-  }
+    setup();
+    while (1)
+    {
+        loop();
+    }
 }

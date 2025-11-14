@@ -555,14 +555,16 @@ namespace fs
     }
     Preferences pref;
     pref.begin("timing", true);
-    uint32_t wifiTimeout = pref.getUInt("wifitm", 300000);           // 5 minutes default
-    uint32_t noMotionTimeout = pref.getUInt("nomotiontm", 10000);    // 10 seconds default
-    uint32_t secureModeTimeout = pref.getUInt("securmodetm", 10000); // 10 seconds default
+    uint32_t wifiTimeout = pref.getULong("wifitm", 300000);                // 5 minutes default
+    uint32_t noMotionTimeout = pref.getULong("nomotiontm", 10000);         // 10 seconds default
+    uint64_t SnapShotTime = pref.getULong64("SnapShotTime", 2*60*60*1000); //
+    uint32_t secureModeTimeout = pref.getULong("securmodetm", 10000);      // 10 seconds default
     pref.end();
 
     String jsonResponse = "{";
     jsonResponse += "\"wifitm\":" + String(wifiTimeout) + ",";
     jsonResponse += "\"nomotiontm\":" + String(noMotionTimeout) + ",";
+    jsonResponse += "\"SnapShotTime\":" + String(SnapShotTime) + ",";
     jsonResponse += "\"securmodetm\":" + String(secureModeTimeout);
     jsonResponse += "}";
 
@@ -591,15 +593,19 @@ namespace fs
       pref.begin("timing", false);
       if (doc["wifitm"].is<uint32_t>())
       {
-        pref.putUInt("wifitm", doc["wifitm"].as<uint32_t>());
+        pref.putULong("wifitm", doc["wifitm"].as<uint32_t>());
       }
       if (doc["nomotiontm"].is<uint32_t>())
       {
-        pref.putUInt("nomotiontm", doc["nomotiontm"].as<uint32_t>());
+        pref.putULong("nomotiontm", doc["nomotiontm"].as<uint32_t>());
       }
       if (doc["securmodetm"].is<uint32_t>())
       {
-        pref.putUInt("securmodetm", doc["securmodetm"].as<uint32_t>());
+        pref.putULong("securmodetm", doc["securmodetm"].as<uint32_t>());
+      }
+      if (doc["SnapShotTime"].is<uint32_t>())
+      {
+        pref.putULong64("SnapShotTime", doc["SnapShotTime"].as<uint64_t>());
       }
       pref.end();
 
